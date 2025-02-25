@@ -53,29 +53,49 @@ const commands = [
 
 client.on('ready', async () =>
 {
-	console.log('Bot is online');
-	// const channel = client.channels.fetch('1343747589383786546');
-	const channel = client.channels.cache.get('1343747589383786546');
-	console.log(channel);
-	channel.send({
-		content: 'Select your role by clicking on a button',
-		components: [new ActionRowBuilder().setComponents(
-			new ButtonBuilder().setCustomId('blue').setLabel('Blue').setStyle(ButtonStyle.Primary),
-			new ButtonBuilder().setCustomId('red').setLabel('Red').setStyle(ButtonStyle.Primary),
-			new ButtonBuilder().setCustomId('green').setLabel('Green').setStyle(ButtonStyle.Primary),
-			new ButtonBuilder().setCustomId('pink').setLabel('Pink').setStyle(ButtonStyle.Primary),
-			new ButtonBuilder().setCustomId('purple').setLabel('Purple').setStyle(ButtonStyle.Primary)
-		)],
-	})
+	console.log('Bot is online'); 
 });
 
-client.on('voiceStateUpdate', async (oldState, newState) => 
+
+
+// This event will trigger when a member's voice state changes (like joining or leaving a voice channel)
+client.on('voiceStateUpdate', async (oldState, newState) =>
 {
-	console.log("\n\n\n\nI AM HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	console.log(`User: ${newState.member.user.tag}`);
-	console.log(`Old Channel: ${oldState.channel ? oldState.channel.name : "None"}`);
-	console.log(`New Channel: ${newState.channel ? newState.channel.name : "None"}`);
-	console.log("I AM HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\n");
+	const member = newState.member;
+
+	// When a member joins a voice channel
+	if (!oldState.channel && newState.channel)
+	{
+		const role = newState.guild.roles.cache.get(ROLES.GREEN); // Adjust to the role you want to assign
+		if (role && member)
+		{
+			try
+			{
+				await member.roles.add(role);
+				console.log(`Assigned the role ${role.name} to ${member.user.tag}`);
+			} catch (err)
+			{
+				console.error('Failed to assign role:', err);
+			}
+		}
+	}
+
+	// When a member leaves a voice channel
+	if (oldState.channel && !newState.channel)
+	{
+		const role = oldState.guild.roles.cache.get(ROLES.GREEN); // Adjust to the role you want to remove
+		if (role && member)
+		{
+			try
+			{
+				await member.roles.remove(role);
+				console.log(`Removed the role ${role.name} from ${member.user.tag}`);
+			} catch (err)
+			{
+				console.error('Failed to remove role:', err);
+			}
+		}
+	}
 });
 
 
@@ -97,42 +117,6 @@ client.on('interactionCreate', async (interaction) =>
 			console.log(getVoiceConnections())
 
 		}
-	}
-
-
-
-	// if (!interaction.isButton()) return;
-	if (interaction.isButton())
-	{
-
-		const role = interaction.guild.roles.cache.get(ROLES[interaction.customId.toUpperCase()]);
-
-		if (!role)
-		{
-			return interaction.reply({ content: 'Role not found', ephemeral: true });
-		}
-
-		if (!interaction.member)
-		{
-			return interaction.reply({ content: 'Could not find member.', ephemeral: true });
-		}
-
-		try
-		{
-			await interaction.member.roles.add(role);
-			await interaction.reply({
-				content: `The ${role.name} role was added to you, ${interaction.member.displayName}.`,
-				ephemeral: true
-			});
-		} catch (err)
-		{
-			console.error('Failed to add role:', err);
-			return interaction.reply({
-				content: `Something went wrong. The ${role.name} role was not added.`,
-				ephemeral: true
-			});
-		}
-
 	}
 
 });
