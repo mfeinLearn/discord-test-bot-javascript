@@ -36,6 +36,7 @@ const client = new Client({
 		GatewayIntentBits.GuildMessages,
 		GatewayIntentBits.MessageContent,
 		GatewayIntentBits.GuildMembers, // REQUIRED for role management
+		GatewayIntentBits.GuildVoiceStates // REQUIRED for voiceStateUpdate event
 	]
 });
 const rest = new REST({ version: '10' }).setToken(TOKEN);
@@ -67,6 +68,16 @@ client.on('ready', async () =>
 		)],
 	})
 });
+
+client.on('voiceStateUpdate', async (oldState, newState) => 
+{
+	console.log("\n\n\n\nI AM HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+	console.log(`User: ${newState.member.user.tag}`);
+	console.log(`Old Channel: ${oldState.channel ? oldState.channel.name : "None"}`);
+	console.log(`New Channel: ${newState.channel ? newState.channel.name : "None"}`);
+	console.log("I AM HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\n");
+});
+
 
 client.on('interactionCreate', async (interaction) =>
 {
@@ -144,4 +155,3 @@ async function main()
 }
 
 main()
-
