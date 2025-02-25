@@ -2,7 +2,18 @@ import { config } from 'dotenv';
 config()
 
 // import { Client, GatewayIntentBits, Routes } from 'discord.js';
-import { Client, GatewayIntentBits, Routes, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import
+{
+	Client,
+	GatewayIntentBits,
+	Routes,
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	SlashCommandBuilder,
+	ChannelType
+} from 'discord.js';
+import { getVoiceConnections, joinVoiceChannel } from '@discordjs/voice';
 
 import { REST } from '@discordjs/rest';
 
@@ -29,7 +40,15 @@ const client = new Client({
 });
 const rest = new REST({ version: '10' }).setToken(TOKEN);
 
-const commands = [];
+const commands = [
+	new SlashCommandBuilder()
+		.setName('join')
+		.setDescription('Joins a Voice Channel')
+		.addChannelOption((option) =>
+			option
+				.setName('channel').setDescription('The channel to join').setRequired(true).addChannelTypes(ChannelType.GuildVoice)).toJSON(),
+
+];
 
 client.on('ready', async () =>
 {
@@ -51,35 +70,60 @@ client.on('ready', async () =>
 
 client.on('interactionCreate', async (interaction) =>
 {
-	if (!interaction.isButton()) return;
-
-	const role = interaction.guild.roles.cache.get(ROLES[interaction.customId.toUpperCase()]);
-
-	if (!role)
+	if (interaction.isChatInputCommand())
 	{
-		return interaction.reply({ content: 'Role not found', ephemeral: true });
+		if (interaction.commandName === 'join')
+		{
+			const voiceChannel = interaction.options.getChannel('channel');
+			const voiceConnection = joinVoiceChannel({
+				channelId: voiceChannel.id,
+				guildId: interaction.guildId,
+				adapterCreator: interaction.guild.voiceAdapterCreator
+
+			});
+
+
+			console.log(getVoiceConnections())
+
+		}
 	}
 
-	if (!interaction.member)
+
+
+	// if (!interaction.isButton()) return;
+	if (interaction.isButton())
 	{
-		return interaction.reply({ content: 'Could not find member.', ephemeral: true });
+
+		const role = interaction.guild.roles.cache.get(ROLES[interaction.customId.toUpperCase()]);
+
+		if (!role)
+		{
+			return interaction.reply({ content: 'Role not found', ephemeral: true });
+		}
+
+		if (!interaction.member)
+		{
+			return interaction.reply({ content: 'Could not find member.', ephemeral: true });
+		}
+
+		try
+		{
+			await interaction.member.roles.add(role);
+			await interaction.reply({
+				content: `The ${role.name} role was added to you, ${interaction.member.displayName}.`,
+				ephemeral: true
+			});
+		} catch (err)
+		{
+			console.error('Failed to add role:', err);
+			return interaction.reply({
+				content: `Something went wrong. The ${role.name} role was not added.`,
+				ephemeral: true
+			});
+		}
+
 	}
 
-	try
-	{
-		await interaction.member.roles.add(role);
-		await interaction.reply({
-			content: `The ${role.name} role was added to you, ${interaction.member.displayName}.`,
-			ephemeral: true
-		});
-	} catch (err)
-	{
-		console.error('Failed to add role:', err);
-		return interaction.reply({
-			content: `Something went wrong. The ${role.name} role was not added.`,
-			ephemeral: true
-		});
-	}
 });
 
 async function main()
